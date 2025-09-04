@@ -51,51 +51,91 @@ export const ConnectionProvider = ({
           });
         }
         url = cloudWSUrl;
-      } else if (mode === "env") {
-        if (!process.env.NEXT_PUBLIC_LIVEKIT_URL) {
-          throw new Error("NEXT_PUBLIC_LIVEKIT_URL is not set");
-        }
-        url = process.env.NEXT_PUBLIC_LIVEKIT_URL;
-        const body: Record<string, any> = {};
-        if (config.settings.room_name) {
-          body.roomName = config.settings.room_name;
-        }
-        if (config.settings.participant_id) {
-          body.participantId = config.settings.participant_id;
-        }
-        if (config.settings.participant_name) {
-          body.participantName = config.settings.participant_name;
-        }
-        if (config.settings.agent_name) {
-          body.agentName = config.settings.agent_name;
-        }
-        if (config.settings.metadata) {
-          body.metadata = config.settings.metadata;
-        }
-        const attributesArray = Array.isArray(config.settings.attributes)
-          ? config.settings.attributes
-          : [];
-        if (attributesArray?.length) {
-          const attributes = attributesArray.reduce(
-            (acc, attr) => {
-              if (attr.key) {
-                acc[attr.key] = attr.value;
-              }
-              return acc;
-            },
-            {} as Record<string, string>,
-          );
-          body.attributes = attributes;
-        }
-        const { accessToken } = await fetch(`/api/token`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        }).then((res) => res.json());
-        token = accessToken;
-      } else {
+      // } else if (mode === "env") {
+      //   if (!process.env.NEXT_PUBLIC_LIVEKIT_URL) {
+      //     throw new Error("NEXT_PUBLIC_LIVEKIT_URL is not set");
+      //   }
+      //   url = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+      //   const body: Record<string, any> = {};
+      //   if (config.settings.room_name) {
+      //     body.roomName = config.settings.room_name;
+      //   }
+      //   if (config.settings.participant_id) {
+      //     body.participantId = config.settings.participant_id;
+      //   }
+      //   if (config.settings.participant_name) {
+      //     body.participantName = config.settings.participant_name;
+      //   }
+      //   if (config.settings.agent_name) {
+      //     body.agentName = config.settings.agent_name;
+      //   }
+      //   if (config.settings.metadata) {
+      //     body.metadata = config.settings.metadata;
+      //   }
+      //   const attributesArray = Array.isArray(config.settings.attributes)
+      //     ? config.settings.attributes
+      //     : [];
+      //   if (attributesArray?.length) {
+      //     const attributes = attributesArray.reduce(
+      //       (acc, attr) => {
+      //         if (attr.key) {
+      //           acc[attr.key] = attr.value;
+      //         }
+      //         return acc;
+      //       },
+      //       {} as Record<string, string>,
+      //     );
+      //     body.attributes = attributes;
+      //   }
+      //   const { accessToken } = await fetch(`/api/token`, {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify(body),
+      //   }).then((res) => res.json());
+      //   token = accessToken;
+      // } else {
+        } else if (mode === "env") {
+  if (!process.env.NEXT_PUBLIC_SANDBOX_ID) {
+    throw new Error("NEXT_PUBLIC_SANDBOX_ID is not set in your environment variables.");
+  }
+
+  const body: Record<string, any> = {};
+  if (config.settings.room_name) {
+    body.room_name = config.settings.room_name;
+  }
+  if (config.settings.participant_name) {
+    body.participant_name = config.settings.participant_name;
+  }
+
+  try {
+    const response = await fetch(`https://cloud-api.livekit.io/api/sandbox/connection-details`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Sandbox-ID": process.env.NEXT_PUBLIC_SANDBOX_ID,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        const errorMessage = `Failed to get token from sandbox: ${response.status} ${errorText}`;
+        setToastMessage({ type: "error", message: errorMessage });
+        throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    token = data.participantToken;
+    url = data.serverUrl;
+  } catch (e) {
+    console.error(e);
+    // Display the error in a toast message for the user
+    setToastMessage({ type: "error", message: (e as Error).message });
+    return; // Stop execution if token generation fails
+  }
+} else {
         token = config.settings.token;
         url = config.settings.ws_url;
       }
