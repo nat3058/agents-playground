@@ -1,12 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { generateRandomAlphanumeric } from "@/lib/util";
 
-// AFTER
-import { 
-  AccessToken, 
-  RoomAgentDispatch, 
-  RoomConfiguration 
-} from "livekit-server-sdk";
+import { AccessToken } from "livekit-server-sdk";
+import { RoomAgentDispatch, RoomConfiguration } from "@livekit/protocol"; // <-- This line is important
 import type { AccessTokenOptions, VideoGrant } from "livekit-server-sdk";
 import { TokenResult } from "../../lib/types";
 
