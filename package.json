@@ -40,6 +40,6 @@
     "prettier": "^3.4.2"
   },
   "overrides": {
-    "@livekit/protocol": "2.2.0"
+    "@livekit/protocol": "1.39.0"
   }
 }
